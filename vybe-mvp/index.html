@@ -1,0 +1,449 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>Vybe — Local Event Discovery</title>
+  <style>
+    *, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; -webkit-tap-highlight-color: transparent; }
+    body { font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', sans-serif; background: #f0f0f0; min-height: 100vh; display: flex; align-items: center; justify-content: center; padding: 2rem 1rem; }
+
+    .phone { width: 390px; min-height: 780px; background: #f7f7f5; border-radius: 44px; border: 10px solid #1a1a2e; overflow: hidden; position: relative; display: flex; flex-direction: column; box-shadow: 0 24px 64px #0003; }
+    .notch { height: 36px; background: #1a1a2e; border-radius: 0 0 20px 20px; width: 130px; position: absolute; top: 0; left: 50%; transform: translateX(-50%); z-index: 10; }
+    .screen { flex: 1; overflow: hidden; display: flex; flex-direction: column; padding-top: 36px; }
+
+    /* ONBOARDING */
+    .ob-wrap { flex: 1; display: flex; flex-direction: column; padding: 32px 24px 24px; background: #fff; overflow-y: auto; }
+    .ob-wrap::-webkit-scrollbar { display: none; }
+    .ob-logo { font-size: 42px; font-weight: 600; color: #1a1a2e; letter-spacing: -1px; margin-bottom: 4px; margin-top: 20px; }
+    .ob-sub { font-size: 15px; color: #888; margin-bottom: 32px; }
+    .ob-q { font-size: 20px; font-weight: 600; color: #1a1a2e; margin-bottom: 6px; }
+    .ob-hint { font-size: 13px; color: #aaa; margin-bottom: 24px; }
+    .tags-grid { display: flex; flex-wrap: wrap; gap: 10px; margin-bottom: 32px; }
+    .tag { padding: 10px 18px; border-radius: 100px; border: 1.5px solid #e0e0e0; font-size: 14px; color: #444; cursor: pointer; transition: all 0.15s; background: #fff; display: flex; align-items: center; gap: 6px; }
+    .tag.selected { background: #1a1a2e; color: #fff; border-color: #1a1a2e; }
+    .ob-btn { background: #1a1a2e; color: #fff; border: none; border-radius: 16px; padding: 16px; font-size: 16px; font-weight: 600; cursor: pointer; width: 100%; margin-top: auto; opacity: 0.4; transition: opacity 0.2s; }
+    .ob-btn.active { opacity: 1; }
+
+    /* NAV */
+    .nav { background: #fff; border-top: 0.5px solid #e8e8e8; padding: 12px 0 20px; display: flex; justify-content: space-around; flex-shrink: 0; }
+    .nav-item { display: flex; flex-direction: column; align-items: center; gap: 3px; font-size: 10px; color: #bbb; cursor: pointer; padding: 0 12px; }
+    .nav-item.active { color: #1a1a2e; }
+    .nav-icon { font-size: 20px; }
+
+    /* HEADER */
+    .hdr { background: #fff; padding: 16px 20px 12px; border-bottom: 0.5px solid #f0f0f0; flex-shrink: 0; }
+    .hdr-top { display: flex; justify-content: space-between; align-items: center; margin-bottom: 12px; }
+    .hdr-loc { font-size: 12px; color: #aaa; }
+    .hdr-title { font-size: 26px; font-weight: 600; color: #1a1a2e; letter-spacing: -0.5px; }
+    .hdr-plus { width: 34px; height: 34px; border-radius: 50%; background: #1a1a2e; display: flex; align-items: center; justify-content: center; color: #fff; font-size: 20px; font-weight: 400; cursor: pointer; border: none; }
+    .filter-row { display: flex; gap: 8px; overflow-x: auto; padding-bottom: 2px; }
+    .filter-row::-webkit-scrollbar { display: none; }
+    .chip { padding: 6px 14px; border-radius: 100px; font-size: 13px; white-space: nowrap; cursor: pointer; border: 1.5px solid #e8e8e8; color: #666; background: #fff; transition: all 0.15s; }
+    .chip.active { background: #1a1a2e; color: #fff; border-color: #1a1a2e; }
+
+    /* FEED */
+    .feed { flex: 1; overflow-y: auto; padding: 16px; display: flex; flex-direction: column; gap: 16px; }
+    .feed::-webkit-scrollbar { display: none; }
+    .section-lbl { font-size: 12px; font-weight: 600; color: #aaa; letter-spacing: 0.8px; text-transform: uppercase; margin-bottom: -4px; }
+    .card { background: #fff; border-radius: 20px; overflow: hidden; border: 0.5px solid #ebebeb; cursor: pointer; transition: transform 0.12s; }
+    .card:active { transform: scale(0.98); }
+    .card-hero { height: 180px; position: relative; display: flex; align-items: center; justify-content: center; }
+    .card-badge { position: absolute; top: 12px; left: 12px; background: rgba(26,26,46,0.82); color: #fff; font-size: 11px; padding: 4px 10px; border-radius: 100px; }
+    .save-btn { position: absolute; top: 10px; right: 10px; background: #fff; border-radius: 50%; width: 32px; height: 32px; display: flex; align-items: center; justify-content: center; font-size: 15px; cursor: pointer; border: none; transition: transform 0.12s; }
+    .save-btn:active { transform: scale(0.85); }
+    .card-body { padding: 14px 16px 16px; }
+    .card-title { font-size: 17px; font-weight: 600; color: #1a1a2e; margin-bottom: 4px; line-height: 1.3; }
+    .card-meta { font-size: 13px; color: #888; display: flex; gap: 12px; margin-bottom: 10px; }
+    .card-footer { display: flex; justify-content: space-between; align-items: center; }
+    .av-stack { display: flex; }
+    .av { width: 22px; height: 22px; border-radius: 50%; border: 2px solid #fff; margin-left: -6px; font-size: 9px; display: flex; align-items: center; justify-content: center; font-weight: 600; }
+    .av:first-child { margin-left: 0; }
+
+    /* DETAIL */
+    .detail { flex: 1; overflow-y: auto; background: #f7f7f5; }
+    .detail::-webkit-scrollbar { display: none; }
+    .detail-hero { height: 260px; position: relative; display: flex; align-items: center; justify-content: center; }
+    .back-btn { position: absolute; top: 16px; left: 16px; background: #fff; border-radius: 50%; width: 36px; height: 36px; display: flex; align-items: center; justify-content: center; font-size: 18px; cursor: pointer; border: none; }
+    .detail-body { padding: 20px; }
+    .pill { padding: 4px 12px; border-radius: 100px; font-size: 12px; }
+    .detail-title { font-size: 26px; font-weight: 600; color: #1a1a2e; letter-spacing: -0.5px; margin: 12px 0 16px; line-height: 1.2; }
+    .info-row { display: flex; align-items: center; gap: 12px; margin-bottom: 14px; }
+    .info-icon { width: 40px; height: 40px; border-radius: 12px; background: #fff; display: flex; align-items: center; justify-content: center; font-size: 18px; border: 0.5px solid #e8e8e8; flex-shrink: 0; }
+    .info-label { font-size: 12px; color: #aaa; }
+    .info-text { font-size: 14px; color: #555; line-height: 1.4; }
+    .map-ph { border-radius: 16px; height: 130px; background: #e8eeea; display: flex; align-items: center; justify-content: center; margin-bottom: 16px; font-size: 13px; color: #888; border: 0.5px solid #dde5dd; }
+    .event-desc { font-size: 14px; color: #666; line-height: 1.7; margin-bottom: 20px; }
+    .rsvp-btn { background: #1a1a2e; color: #fff; border: none; border-radius: 16px; padding: 16px; font-size: 16px; font-weight: 600; cursor: pointer; width: 100%; margin-bottom: 24px; transition: background 0.2s; }
+    .rsvp-btn.going { background: #1d9e75; }
+
+    /* SAVED */
+    .saved-wrap { flex: 1; overflow-y: auto; background: #fff; }
+    .saved-wrap::-webkit-scrollbar { display: none; }
+    .page-hdr { font-size: 26px; font-weight: 600; color: #1a1a2e; padding: 28px 20px 4px; }
+    .page-sub { font-size: 14px; color: #aaa; padding: 0 20px 16px; }
+    .saved-card { display: flex; align-items: center; gap: 14px; padding: 14px 20px; cursor: pointer; border-bottom: 0.5px solid #f5f5f5; }
+    .saved-icon { width: 48px; height: 48px; border-radius: 14px; flex-shrink: 0; display: flex; align-items: center; justify-content: center; font-size: 22px; }
+    .saved-name { font-size: 15px; font-weight: 600; color: #1a1a2e; margin-bottom: 2px; }
+    .saved-meta { font-size: 12px; color: #aaa; }
+    .unsave-btn { background: none; border: none; font-size: 18px; cursor: pointer; padding: 4px; margin-left: auto; }
+    .empty { text-align: center; padding: 64px 24px; color: #bbb; }
+    .empty-icon { font-size: 48px; margin-bottom: 12px; }
+
+    /* HOST FORM */
+    .host-wrap { flex: 1; overflow-y: auto; background: #fff; }
+    .host-wrap::-webkit-scrollbar { display: none; }
+    .host-inner { padding: 16px 24px 40px; }
+    .host-top { display: flex; align-items: center; gap: 12px; padding-top: 16px; margin-bottom: 20px; }
+    .host-back { background: none; border: none; font-size: 20px; cursor: pointer; color: #1a1a2e; padding: 0; }
+    .host-title { font-size: 22px; font-weight: 600; color: #1a1a2e; }
+    .field-lbl { font-size: 13px; font-weight: 600; color: #555; margin-bottom: 6px; }
+    .field { width: 100%; border: 1.5px solid #e8e8e8; border-radius: 12px; padding: 12px 14px; font-size: 14px; color: #1a1a2e; background: #fff; outline: none; font-family: inherit; transition: border-color 0.15s; margin-bottom: 18px; }
+    .field:focus { border-color: #1a1a2e; }
+    textarea.field { resize: none; height: 88px; line-height: 1.6; }
+    .cat-grid { display: flex; flex-wrap: wrap; gap: 8px; margin-bottom: 18px; }
+    .cat-chip { padding: 8px 14px; border-radius: 100px; border: 1.5px solid #e0e0e0; font-size: 13px; color: #444; cursor: pointer; background: #fff; display: flex; align-items: center; gap: 5px; transition: all 0.15s; }
+    .cat-chip.selected { background: #1a1a2e; color: #fff; border-color: #1a1a2e; }
+    .pay-box { background: #f7f7f5; border-radius: 16px; padding: 16px; margin-bottom: 24px; border: 1.5px solid #e8e8e8; }
+    .pay-ttl { font-size: 15px; font-weight: 600; color: #1a1a2e; margin-bottom: 4px; }
+    .pay-sub { font-size: 13px; color: #888; margin-bottom: 14px; }
+    .pay-row { display: flex; justify-content: space-between; font-size: 14px; color: #555; margin-bottom: 8px; }
+    .pay-total { display: flex; justify-content: space-between; font-size: 16px; font-weight: 600; color: #1a1a2e; padding-top: 12px; border-top: 0.5px solid #e0e0e0; }
+    .pub-btn { background: #1a1a2e; color: #fff; border: none; border-radius: 16px; padding: 16px; font-size: 16px; font-weight: 600; cursor: pointer; width: 100%; transition: opacity 0.2s; }
+    .pub-btn:disabled { opacity: 0.35; cursor: default; }
+
+    /* SUCCESS */
+    .success-wrap { flex: 1; display: flex; flex-direction: column; align-items: center; justify-content: center; padding: 40px 28px; background: #fff; text-align: center; }
+    .success-circle { width: 80px; height: 80px; border-radius: 50%; background: #e8f4ee; display: flex; align-items: center; justify-content: center; font-size: 36px; margin-bottom: 20px; }
+    .success-ttl { font-size: 22px; font-weight: 600; color: #1a1a2e; margin-bottom: 8px; }
+    .success-sub { font-size: 14px; color: #888; margin-bottom: 32px; line-height: 1.6; max-width: 280px; }
+    .success-home { background: #1a1a2e; color: #fff; border: none; border-radius: 16px; padding: 14px 32px; font-size: 15px; font-weight: 600; cursor: pointer; }
+  </style>
+</head>
+<body>
+<div class="phone">
+  <div class="notch"></div>
+  <div class="screen" id="screen"></div>
+</div>
+
+<script>
+const INTERESTS = [
+  {id:'music',label:'Live Music',icon:'🎵'},{id:'food',label:'Food & Drink',icon:'🍕'},
+  {id:'art',label:'Art & Culture',icon:'🎨'},{id:'sports',label:'Sports',icon:'⚽'},
+  {id:'nightlife',label:'Nightlife',icon:'🌙'},{id:'outdoor',label:'Outdoors',icon:'🌿'},
+  {id:'comedy',label:'Comedy',icon:'😂'},{id:'markets',label:'Markets',icon:'🛍️'},
+];
+
+const BASE_EVENTS = [
+  {id:1,title:'Rooftop Jazz Night',cat:'music',catLabel:'Live Music',date:'Fri Mar 21',time:'8:00 PM',location:'The Marquee Rooftop',dist:'0.4 mi',desc:'An intimate evening of live jazz under the stars. Local trio performs standards and originals. Doors open at 7:30 PM. 21+ event. Craft cocktails available.',colors:['#9FE1CB','#B5D4F4','#FAC775'],emoji:'🎷',going:47},
+  {id:2,title:'Sunday Farmers Market',cat:'markets',catLabel:'Markets',date:'Sun Mar 23',time:'9:00 AM',location:'Centennial Park Plaza',dist:'0.8 mi',desc:'Over 60 local vendors with fresh produce, artisan goods, and street food. Free entry. Pet-friendly. Live acoustic music throughout the day.',colors:['#C0DD97','#FAC775','#9FE1CB'],emoji:'🛍️',going:134},
+  {id:3,title:'Pop-Up Comedy Showcase',cat:'comedy',catLabel:'Comedy',date:'Sat Mar 22',time:'9:30 PM',location:'The Underground Bar',dist:'1.1 mi',desc:'Five up-and-coming comedians in this monthly showcase. Hosted by local favorite DJ Reeves. Two-drink minimum. Doors at 9 PM.',colors:['#FAC775','#F5C4B3','#F4C0D1'],emoji:'😂',going:28},
+  {id:4,title:'Food Truck Festival',cat:'food',catLabel:'Food & Drink',date:'Sat Mar 22',time:'12:00 PM',location:'Riverside Waterfront',dist:'1.4 mi',desc:'20+ food trucks, 3 stages of live music, and a craft beer garden. Family friendly. Free entry. VIP tickets available for front-of-line access.',colors:['#F5C4B3','#FAC775','#9FE1CB'],emoji:'🍕',going:312},
+  {id:5,title:'Outdoor Yoga & Brunch',cat:'outdoor',catLabel:'Outdoors',date:'Sun Mar 23',time:'10:00 AM',location:'Biscayne Bayfront Park',dist:'2.0 mi',desc:'One-hour guided flow class followed by a curated brunch spread. All skill levels welcome. Bring your own mat. Limited to 40 participants.',colors:['#9FE1CB','#C0DD97','#E6F1FB'],emoji:'🌿',going:22},
+  {id:6,title:'Street Art Gallery Walk',cat:'art',catLabel:'Art & Culture',date:'Fri Mar 21',time:'6:00 PM',location:'Wynwood Arts District',dist:'2.3 mi',desc:'Guided walking tour of the newest murals and gallery openings in Wynwood. Free to attend. Local artists on hand. Ends at an open bar reception at Gallery 22.',colors:['#EEEDFE','#F4C0D1','#FAC775'],emoji:'🎨',going:89},
+];
+
+let state = {
+  screen:'onboarding', selectedInterests:[], activeFilter:'All',
+  savedEvents:[], rsvpdEvents:[], currentEvent:null,
+  hostForm:{title:'',date:'',time:'',location:'',cat:'',desc:''},
+  postedEvents:[], nextId:100,
+};
+
+function allEvents() { return [...BASE_EVENTS, ...state.postedEvents]; }
+
+function getFiltered() {
+  let evs = allEvents();
+  if (state.selectedInterests.length > 0) {
+    const f = evs.filter(e => state.selectedInterests.includes(e.cat));
+    if (f.length > 0) evs = f;
+  }
+  if (state.activeFilter !== 'All') {
+    const m = {Music:'music',Food:'food',Art:'art',Comedy:'comedy',Outdoors:'outdoor',Markets:'markets',Nightlife:'nightlife',Sports:'sports'};
+    const f = evs.filter(e => e.cat === m[state.activeFilter]);
+    if (f.length > 0) evs = f;
+  }
+  return evs;
+}
+
+function render() {
+  const s = document.getElementById('screen');
+  const screens = {
+    onboarding: renderOnboarding,
+    feed: renderFeed,
+    detail: renderDetail,
+    saved: renderSaved,
+    host: renderHost,
+    success: renderSuccess,
+  };
+  s.innerHTML = (screens[state.screen] || renderFeed)();
+  attachEvents();
+}
+
+function renderOnboarding() {
+  const sel = state.selectedInterests;
+  return `<div class="ob-wrap">
+    <div class="ob-logo">vybe</div>
+    <div class="ob-sub">Discover what's happening near you</div>
+    <div class="ob-q">What are you into?</div>
+    <div class="ob-hint">Pick a few things you enjoy — we'll personalize your feed</div>
+    <div class="tags-grid">${INTERESTS.map(i => `
+      <div class="tag${sel.includes(i.id)?' selected':''}" data-tag="${i.id}">
+        <span style="font-size:16px;">${i.icon}</span>${i.label}
+      </div>`).join('')}</div>
+    <button class="ob-btn${sel.length > 0 ? ' active' : ''}" id="ob-btn" ${sel.length === 0 ? 'disabled' : ''}>
+      Find events near me
+    </button>
+  </div>`;
+}
+
+function renderCard(ev) {
+  const saved = state.savedEvents.includes(ev.id);
+  return `<div class="card" data-event="${ev.id}">
+    <div class="card-hero" style="background:linear-gradient(145deg,${ev.colors[0]}99,${ev.colors[1]}88,${ev.colors[2]}99);">
+      <span style="font-size:68px;opacity:0.65;">${ev.emoji}</span>
+      <div class="card-badge">${ev.catLabel}</div>
+      <button class="save-btn" data-save="${ev.id}">${saved ? '❤️' : '🤍'}</button>
+    </div>
+    <div class="card-body">
+      <div class="card-title">${ev.title}</div>
+      <div class="card-meta"><span>📅 ${ev.date}</span><span>📍 ${ev.dist}</span></div>
+      <div class="card-footer">
+        <div style="display:flex;align-items:center;gap:8px;">
+          <div class="av-stack">${ev.colors.map((c,i) => `<div class="av" style="background:${c};">${'ABC'[i]}</div>`).join('')}</div>
+          <span style="font-size:12px;color:#aaa;">${ev.going} going</span>
+        </div>
+        <span style="font-size:12px;color:#aaa;">${ev.time}</span>
+      </div>
+    </div>
+  </div>`;
+}
+
+function renderFeed() {
+  const filters = ['All','Music','Food','Art','Comedy','Outdoors','Markets'];
+  const evs = getFiltered();
+  return `
+    <div class="hdr">
+      <div class="hdr-top">
+        <div><div class="hdr-loc">📍 Cape Coral, FL</div><div class="hdr-title">Discover</div></div>
+        <button class="hdr-plus" data-nav="host">+</button>
+      </div>
+      <div class="filter-row">${filters.map(f => `<div class="chip${state.activeFilter===f?' active':''}" data-filter="${f}">${f}</div>`).join('')}</div>
+    </div>
+    <div class="feed">
+      <div class="section-lbl">Near You Tonight</div>
+      ${evs.slice(0,2).map(renderCard).join('')}
+      ${evs.length > 2 ? `<div class="section-lbl">More This Weekend</div>${evs.slice(2).map(renderCard).join('')}` : ''}
+    </div>
+    ${renderNav('feed')}`;
+}
+
+function renderDetail() {
+  const ev = state.currentEvent; if (!ev) return '';
+  const rsvpd = state.rsvpdEvents.includes(ev.id);
+  const saved = state.savedEvents.includes(ev.id);
+  return `
+    <div class="detail">
+      <div class="detail-hero" style="background:linear-gradient(145deg,${ev.colors[0]}cc,${ev.colors[1]}aa,${ev.colors[2]}99);">
+        <span style="font-size:88px;opacity:0.6;">${ev.emoji}</span>
+        <button class="back-btn" id="detail-back">←</button>
+        <button class="save-btn" data-save="${ev.id}" style="position:absolute;top:16px;right:16px;width:36px;height:36px;font-size:18px;">${saved ? '❤️' : '🤍'}</button>
+      </div>
+      <div class="detail-body">
+        <div style="display:flex;gap:8px;">
+          <span class="pill" style="background:#e8f4ee;color:#1d9e75;">${ev.catLabel}</span>
+          <span class="pill" style="background:#f0f0ff;color:#534AB7;">${ev.going} going</span>
+        </div>
+        <div class="detail-title">${ev.title}</div>
+        <div class="info-row"><div class="info-icon">📅</div><div><div class="info-label">Date & Time</div><div class="info-text">${ev.date} · ${ev.time}</div></div></div>
+        <div class="info-row"><div class="info-icon">📍</div><div><div class="info-label">Location</div><div class="info-text">${ev.location} · ${ev.dist}</div></div></div>
+        <div class="map-ph"><div style="text-align:center;"><div style="font-size:28px;margin-bottom:6px;">🗺️</div><div>${ev.location}</div></div></div>
+        <div class="event-desc">${ev.desc}</div>
+        <button class="rsvp-btn${rsvpd?' going':''}" id="rsvp-btn" data-rsvp="${ev.id}">${rsvpd ? '✓  You\'re going!' : 'RSVP — I\'m going'}</button>
+      </div>
+    </div>`;
+}
+
+function renderSaved() {
+  const saved = allEvents().filter(e => state.savedEvents.includes(e.id));
+  return `
+    <div class="saved-wrap">
+      <div class="page-hdr">Saved</div>
+      <div class="page-sub">${saved.length} event${saved.length !== 1 ? 's' : ''} saved</div>
+      ${saved.length === 0
+        ? `<div class="empty"><div class="empty-icon">🤍</div><div>No saved events yet</div><div style="margin-top:8px;font-size:12px;">Tap the heart on any event</div></div>`
+        : saved.map(ev => `
+          <div class="saved-card" data-event="${ev.id}">
+            <div class="saved-icon" style="background:${ev.colors[0]}55;">${ev.emoji}</div>
+            <div><div class="saved-name">${ev.title}</div><div class="saved-meta">${ev.date} · ${ev.time}</div></div>
+            <button class="unsave-btn" data-save="${ev.id}">❤️</button>
+          </div>`).join('')}
+    </div>
+    ${renderNav('saved')}`;
+}
+
+function renderHost() {
+  const f = state.hostForm;
+  const valid = f.title && f.date && f.time && f.location && f.cat;
+  return `
+    <div class="host-wrap">
+      <div class="host-inner">
+        <div class="host-top">
+          <button class="host-back" id="host-back">←</button>
+          <div class="host-title">Post an Event</div>
+        </div>
+        <div class="field-lbl">Event name</div>
+        <input class="field" id="f-title" placeholder="e.g. Rooftop DJ Night" value="${f.title}">
+        <div class="field-lbl">Category</div>
+        <div class="cat-grid">${INTERESTS.map(i => `
+          <div class="cat-chip${f.cat===i.id?' selected':''}" data-cat="${i.id}">
+            <span style="font-size:14px;">${i.icon}</span>${i.label}
+          </div>`).join('')}</div>
+        <div style="display:grid;grid-template-columns:1fr 1fr;gap:12px;">
+          <div><div class="field-lbl">Date</div><input class="field" id="f-date" placeholder="Mar 28, 2026" value="${f.date}" style="margin-bottom:0;"></div>
+          <div><div class="field-lbl">Time</div><input class="field" id="f-time" placeholder="8:00 PM" value="${f.time}" style="margin-bottom:0;"></div>
+        </div>
+        <div style="margin-bottom:18px;"></div>
+        <div class="field-lbl">Location</div>
+        <input class="field" id="f-location" placeholder="Venue name or address" value="${f.location}">
+        <div class="field-lbl">Description</div>
+        <textarea class="field" id="f-desc" placeholder="What should attendees expect?">${f.desc}</textarea>
+        <div class="pay-box">
+          <div class="pay-ttl">💳 Pay to Post</div>
+          <div class="pay-sub">A one-time fee ensures only serious events reach our community.</div>
+          <div class="pay-row"><span>Single event listing</span><span>$9.00</span></div>
+          <div class="pay-row"><span>Platform fee</span><span>$1.00</span></div>
+          <div class="pay-total"><span>Total due</span><span>$10.00</span></div>
+        </div>
+        <button class="pub-btn" id="pub-btn" ${!valid ? 'disabled' : ''}>
+          ${valid ? 'Publish event — $10.00' : 'Complete all fields to continue'}
+        </button>
+      </div>
+    </div>`;
+}
+
+function renderSuccess() {
+  const ev = state.postedEvents[state.postedEvents.length - 1];
+  return `
+    <div class="success-wrap">
+      <div class="success-circle">✓</div>
+      <div class="success-ttl">Event published!</div>
+      <div class="success-sub">"${ev ? ev.title : 'Your event'}" is now live on Vybe and visible to nearby users who match your category.</div>
+      <button class="success-home" id="success-home">Back to feed</button>
+    </div>`;
+}
+
+function renderNav(active) {
+  return `<div class="nav">${[
+    {id:'feed',icon:'🔍',label:'Discover'},
+    {id:'map',icon:'🗺️',label:'Map'},
+    {id:'host',icon:'➕',label:'Post'},
+    {id:'saved',icon:'❤️',label:'Saved'},
+    {id:'profile',icon:'👤',label:'Profile'},
+  ].map(i => `<div class="nav-item${active===i.id?' active':''}" data-nav="${i.id}"><span class="nav-icon">${i.icon}</span><span>${i.label}</span></div>`).join('')}</div>`;
+}
+
+function syncForm() {
+  ['title','date','time','location','desc'].forEach(k => {
+    const el = document.getElementById('f-' + k);
+    if (el) state.hostForm[k] = el.value;
+  });
+}
+
+function attachEvents() {
+  document.querySelectorAll('[data-tag]').forEach(el => el.addEventListener('click', () => {
+    const id = el.dataset.tag;
+    state.selectedInterests = state.selectedInterests.includes(id)
+      ? state.selectedInterests.filter(x => x !== id) : [...state.selectedInterests, id];
+    render();
+  }));
+
+  const obBtn = document.getElementById('ob-btn');
+  if (obBtn) obBtn.addEventListener('click', () => { if (state.selectedInterests.length) { state.screen = 'feed'; render(); } });
+
+  document.querySelectorAll('[data-filter]').forEach(el => el.addEventListener('click', () => {
+    state.activeFilter = el.dataset.filter; render();
+  }));
+
+  document.querySelectorAll('.card[data-event]').forEach(el => el.addEventListener('click', e => {
+    if (e.target.closest('[data-save]')) return;
+    const ev = allEvents().find(x => x.id == el.dataset.event);
+    if (ev) { state.currentEvent = ev; state.screen = 'detail'; render(); }
+  }));
+
+  document.querySelectorAll('.saved-card[data-event]').forEach(el => el.addEventListener('click', e => {
+    if (e.target.closest('[data-save], .unsave-btn')) return;
+    const ev = allEvents().find(x => x.id == el.dataset.event);
+    if (ev) { state.currentEvent = ev; state.screen = 'detail'; render(); }
+  }));
+
+  document.querySelectorAll('[data-save]').forEach(el => el.addEventListener('click', e => {
+    e.stopPropagation();
+    const id = parseInt(el.dataset.save);
+    state.savedEvents = state.savedEvents.includes(id)
+      ? state.savedEvents.filter(x => x !== id) : [...state.savedEvents, id];
+    render();
+  }));
+
+  const detailBack = document.getElementById('detail-back');
+  if (detailBack) detailBack.addEventListener('click', () => { state.screen = 'feed'; render(); });
+
+  const rsvpBtn = document.getElementById('rsvp-btn');
+  if (rsvpBtn) rsvpBtn.addEventListener('click', () => {
+    const id = parseInt(rsvpBtn.dataset.rsvp);
+    state.rsvpdEvents = state.rsvpdEvents.includes(id)
+      ? state.rsvpdEvents.filter(x => x !== id) : [...state.rsvpdEvents, id];
+    if (!state.savedEvents.includes(id)) state.savedEvents.push(id);
+    state.currentEvent = allEvents().find(x => x.id === id);
+    render();
+  });
+
+  const hostBack = document.getElementById('host-back');
+  if (hostBack) hostBack.addEventListener('click', () => { state.screen = 'feed'; render(); });
+
+  document.querySelectorAll('[data-cat]').forEach(el => el.addEventListener('click', () => {
+    state.hostForm.cat = el.dataset.cat; syncForm(); render();
+  }));
+
+  ['title','date','time','location','desc'].forEach(k => {
+    const el = document.getElementById('f-' + k);
+    if (el) el.addEventListener('input', () => {
+      syncForm();
+      const f = state.hostForm;
+      const btn = document.getElementById('pub-btn');
+      if (!btn) return;
+      const valid = f.title && f.date && f.time && f.location && f.cat;
+      btn.disabled = !valid;
+      btn.textContent = valid ? 'Publish event — $10.00' : 'Complete all fields to continue';
+    });
+  });
+
+  const pubBtn = document.getElementById('pub-btn');
+  if (pubBtn) pubBtn.addEventListener('click', () => {
+    syncForm();
+    const f = state.hostForm;
+    if (!f.title || !f.date || !f.time || !f.location || !f.cat) return;
+    const cat = INTERESTS.find(i => i.id === f.cat);
+    state.postedEvents.push({
+      id: state.nextId++, title: f.title, cat: f.cat,
+      catLabel: cat ? cat.label : f.cat, date: f.date, time: f.time,
+      location: f.location, dist: 'nearby', desc: f.desc || 'Come join us!',
+      colors: ['#9FE1CB','#FAC775','#EEEDFE'], emoji: cat ? cat.icon : '🎉', going: 1,
+    });
+    state.hostForm = {title:'',date:'',time:'',location:'',cat:'',desc:''};
+    state.screen = 'success'; render();
+  });
+
+  const successHome = document.getElementById('success-home');
+  if (successHome) successHome.addEventListener('click', () => { state.activeFilter = 'All'; state.screen = 'feed'; render(); });
+
+  document.querySelectorAll('[data-nav]').forEach(el => el.addEventListener('click', () => {
+    const nav = el.dataset.nav;
+    if (['feed','saved','host'].includes(nav)) { state.screen = nav; render(); }
+  }));
+}
+
+render();
+</script>
+</body>
+</html>
