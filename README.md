@@ -8,7 +8,7 @@ Vybe is an open-source mobile event discovery application that helps young adult
 
 ## Live Demo
 
-> Open `index.html` in any browser — no install, no build step, no dependencies.
+> Open '(https://aaronc2215.github.io/vybe-mvp/)' in any browser — no install, no build step, no dependencies.
 
 ```bash
 git clone https://github.com/YOUR_USERNAME/vybe-mvp.git
@@ -136,6 +136,5 @@ MIT License — see `LICENSE` for details.
 ## Group 6
 
 CEN 4930 — Open Source for Entrepreneurs  
-Due: March 21, 2026 | Demo: March 23 or 25, 2026
 
-*[Member Name 1] · [Member Name 2] · [Member Name 3] · [Member Name 4]*
+*Aaron Cole · Drake Pollard · Angelo Diaz 
