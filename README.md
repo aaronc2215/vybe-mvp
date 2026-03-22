@@ -54,22 +54,26 @@ This is a medium-fidelity interactive prototype built as a single HTML file. It 
 ### Onboarding — Interest Selection
 Pick your interests to personalize your feed.
 
-![Onboarding screen showing interest tag selection]
+<img width="464" height="899" alt="image" src="https://github.com/user-attachments/assets/550d8e35-7d46-4580-b068-51d70a6ba06d" />
+
 
 ### Event Feed
-Personalized, filterable feed of nearby events.
+Personalized, filterable feed of nearby events. Location is visible at the top.
 
-![Feed screen showing event cards with category filter chips]
+<img width="465" height="889" alt="image" src="https://github.com/user-attachments/assets/0792d51c-f49e-4d5c-9a08-0bccc36e48d0" />
+
 
 ### Event Detail View
 Full event info with RSVP and save actions.
 
-![Detail screen showing event title, date, location, map and RSVP button]
+<img width="440" height="983" alt="image" src="https://github.com/user-attachments/assets/9d37b294-08c9-4e7e-8580-336b595bf6d7" />
+
 
 ### Post an Event (Host Flow)
 Hosts fill in event details and pay to publish.
 
-![Host form showing fields for title, category, date, location, and pay-to-post box]
+<img width="476" height="1063" alt="image" src="https://github.com/user-attachments/assets/80c5b985-5879-47a0-a8f5-7d8d64c318a6" />
+
 
 ---
 
