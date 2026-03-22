@@ -87,7 +87,7 @@ Hosts fill in event details and pay to publish.
 | Node.js + Express *(planned)* | REST API backend | MIT |
 | PostgreSQL *(planned)* | Database | PostgreSQL License |
 | Leaflet.js *(planned)* | Map rendering | BSD 2-Clause |
-| Stripe *(planned)* | Pay-to-post payments | Proprietary |
+| Stripe SDK *(planned)* | Pay-to-post payments | MIT |
 
 ---
 
