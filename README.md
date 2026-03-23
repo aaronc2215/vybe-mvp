@@ -1,4 +1,4 @@
-# Vybe — Local Event Discovery App
+# Vybe — Local Event Discovery App 
 
 **CEN 4930: Open Source for Entrepreneurs · Group 6 · Assignment 4**
 
