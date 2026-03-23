@@ -97,7 +97,6 @@ Hosts fill in event details and pay to publish.
 vybe-mvp/
 ├── index.html        # Full interactive prototype (single file)
 ├── README.md         # This file
-└── screenshots/      # Demo screenshots
 ```
 
 ---
@@ -127,13 +126,13 @@ Vybe is built open-source for strategic reasons, not just cost:
 
 - **Algorithmic transparency** — the community can verify events are ranked by relevance and geography, not hidden ad auctions. This builds trust with a demographic skeptical of platforms like Facebook.
 - **Federated hosting model** — the open codebase enables universities and municipalities to run their own Vybe instances, which is the foundation of our SaaS revenue stream.
-- **MIT License on the core** — removes barriers for contributors and enterprise evaluators to inspect, fork, and deploy the platform.
+- **AGPL License on the core** — removes barriers for contributors and enterprise evaluators to inspect, fork, and deploy the platform, while preventing competitors from taking advantage of the software without contributing.
 
 ---
 
 ## License
 
-MIT License — see `LICENSE` for details.
+AGPL License — see `LICENSE` for details.
 
 ---
 
